@@ -1,6 +1,8 @@
 #!/bin/sh
 
-base_dir=/home/users/campioru/Electoral_Redistricting
+rel_dir="$(dirname "$0")/.."
+cd $rel_dir
+base_dir=$(pwd)
 code_dir=${base_dir}/code
 data_dir=${base_dir}/data
 
@@ -20,7 +22,6 @@ N_meas=100
 N_disc=50
 
 
-cd $base_dir
 make ED_data.csv MCMC_SA actual_H
 source .venv/bin/activate
 python3 ${code_dir}/txt_for_MCMC.py $area_type $area_list $area_name
