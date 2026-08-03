@@ -26,7 +26,6 @@ make ED_data.csv MCMC_SA actual_H
 source .venv/bin/activate
 python3 ${code_dir}/txt_for_MCMC.py $area_type $area_list $area_name
 deactivate
-mkdir ${data_dir}/${area_name}/${seats}_${constituencies} -p
 ./actual_H $area_name
 
 for seat_config in ${seat_configs[@]}

@@ -7,6 +7,7 @@
 using std::valarray;
 #include <chrono>
 #include <set>
+#include <filesystem>
 #include "Map.h"
 #include "statfuncs.h"
 
@@ -207,6 +208,7 @@ int main(int argc, char *argv[])
 
   // printing everything to .csv
   std::string save_dir = data_dir + std::to_string(map.total_seats()) + "_" + std::to_string(map.Q()) + "/";
+  std::filesystem::create_directory(save_dir);
   std::string filename = std::to_string(map.seat(0));
   for (int q = 1; q < seats.size(); q ++) filename += "," + std::to_string(map.seat(q));
   filename += "_" + J_str[0];
