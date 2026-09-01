@@ -38,8 +38,8 @@ endif()
 # Core library (Map + statistics helpers, shared by both executables)
 # ---------------------------------------------------------------------------
 add_library(cothrom_core STATIC
-  headers/Map.cpp
-  headers/statfuncs.cpp)
+  src/Map.cpp
+  src/statfuncs.cpp)
 
 target_include_directories(cothrom_core
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/headers)
@@ -50,8 +50,8 @@ target_link_libraries(cothrom_core
 # ---------------------------------------------------------------------------
 # Executables
 # ---------------------------------------------------------------------------
-add_executable(MCMC_SA code/MCMC_SA.cpp)
+add_executable(MCMC_SA src/MCMC_SA.cpp)
 target_link_libraries(MCMC_SA PRIVATE cothrom_core ${FS_LIB})
 
-add_executable(actual_H code/actual_H.cpp)
+add_executable(actual_H src/actual_H.cpp)
 target_link_libraries(actual_H PRIVATE cothrom_core ${FS_LIB})
