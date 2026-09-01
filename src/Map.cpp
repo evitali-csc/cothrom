@@ -1,6 +1,7 @@
 #include <valarray>
 using std::valarray;
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
 #include <algorithm>
 #include <numeric>
 #include <random>
@@ -90,7 +91,7 @@ valarray<double> Map::deltaH_curr_(const int& x, int& cqg_idx, vector<vector<int
   if (tmp_county_tally[ED_cou_[x]] < *std::max_element(tmp_county_tally.begin(), tmp_county_tally.end())) deltaHB_curr --;
 
   // return the changes to the population, contiguity, and compactness Hamiltonians
-  return valarray<double>{ (abs(q_pop_[curr] - ED_pop_[x]) - abs(q_pop_[curr]))/(seats_[curr] * av_pop_), fabs(q_group_[curr].size() + cngs.size() - 2.) - q_group_[curr].size() + 1, double(deltaHD_curr), double(deltaHB_curr) };
+  return valarray<double>{ (std::fabs(q_pop_[curr] - ED_pop_[x]) - std::fabs(q_pop_[curr]))/(seats_[curr] * av_pop_), std::fabs(q_group_[curr].size() + cngs.size() - 2.) - q_group_[curr].size() + 1, double(deltaHD_curr), double(deltaHB_curr) };
 }
 valarray<double> Map::deltaH_prop_(const int& x, const int& prop, vector<int>& pqg_idxs, vector<vector<int>>& pngs) const
 {
@@ -127,7 +128,7 @@ valarray<double> Map::deltaH_prop_(const int& x, const int& prop, vector<int>& p
   if (q_cou_[prop][ED_cou_[x]] != *std::max_element(q_cou_[prop].begin(), q_cou_[prop].end())) deltaHB_prop ++;
 
   // return the changes to the population, contiguity, and compactness Hamiltonians
-  return valarray<double>{ (abs(q_pop_[prop] + ED_pop_[x]) - abs(q_pop_[prop]))/(seats_[prop] * av_pop_), q_group_[prop].size() - pngs.size() - fabs(q_group_[prop].size() - 1.), double(deltaHD_prop), double(deltaHB_prop) };
+  return valarray<double>{ (std::fabs(q_pop_[prop] + ED_pop_[x]) - std::fabs(q_pop_[prop]))/(seats_[prop] * av_pop_), q_group_[prop].size() - pngs.size() - std::fabs(q_group_[prop].size() - 1.), double(deltaHD_prop), double(deltaHB_prop) };
 }
 
 void Map::config_update_()
@@ -214,8 +215,8 @@ valarray<double> Map::H() const
   #pragma omp parallel for reduction(+:HP,HC,HB)
   for (int q = 0; q < Q_; q ++)
   {
-    HP += abs(q_pop_[q]) / (seats_[q] * av_pop_);
-    HC += abs(int(q_group_[q].size()) - 1);
+    HP += std::fabs(q_pop_[q]) / (seats_[q] * av_pop_);
+    HC += std::abs(int(q_group_[q].size()) - 1);
     int tally = 0;
     // EDs in each constituency's primary county don't contribute to breaches
     HB -= *std::max_element(q_cou_[q].begin(), q_cou_[q].end());
@@ -249,7 +250,7 @@ int Map::MA_Sweep(valarray<double>& H, const valarray<double>& J_ZT)
 
     // accepting/rejecting proposal
     double deltaH_sum = (J_ZT*deltaH).sum();
-    if (deltaH_sum <= 0 || standard_uniform(r) < exp(-deltaH_sum))
+    if (deltaH_sum <= 0 || standard_uniform(r) < std::exp(-deltaH_sum))
     {
       site_update_(x, prop, cqg_idx, cngs, pqg_idxs, pngs);
       H += deltaH;
@@ -283,7 +284,7 @@ int Map::GS_Sweep(valarray<double>& H, const valarray<double>& J_ZT)
       if (q != curr)
       {
         deltaH[q] += deltaH_prop_(x, q, pqg_idxs[q], pngs[q]);
-        prop_dist[q] = exp(-(J_ZT*deltaH[q]).sum());
+        prop_dist[q] = std::exp(-(J_ZT*deltaH[q]).sum());
       }
       // no need to calculate "change" to current constituency
       else
