@@ -1,4 +1,4 @@
-#include <math.h>
+#include <cmath>
 #include <numeric>
 #include "statfuncs.h"
 
@@ -20,7 +20,7 @@ void autocorr(const vector<double>& chain, double& tau_hat, double& tau_hat_err,
     for (int n = 0; n < N-M; n ++) sum += (chain[n]-mean)*(chain[n+M]-mean);
     tau_hat += sum/(N-M)*fac;
   } while (M < 5.*tau_hat || tau_hat <= 0.);
-  tau_hat_err = tau_hat*sqrt((4.*M+2.)/N);
+  tau_hat_err = tau_hat*std::sqrt((4.*M+2.)/N);
 }
 vector<double> thin(const vector<double>& chain, const int& tau)
 {
@@ -44,7 +44,7 @@ void Markov_chain_calculations(const vector<double>& chain, vector<double>& mean
 
   double quadratic_sum = 0.;
   #pragma omp parallel for reduction(+:quadratic_sum)
-  for (int n = 0; n < N; n ++) quadratic_sum += pow(chain[n] - sample_mean, 2);
+  for (int n = 0; n < N; n ++) quadratic_sum += std::pow(chain[n] - sample_mean, 2);
 
   double tau_hat, tau_hat_err;
   autocorr(chain, tau_hat, tau_hat_err, sample_mean, quadratic_sum);
@@ -54,17 +54,17 @@ void Markov_chain_calculations(const vector<double>& chain, vector<double>& mean
   double sample_var = N_eff * sample_mean_var;
 
   // TODO make exception for non-positive tau
-  vector<double> thinned = thin(chain, ceil(tau_hat));
+  vector<double> thinned = thin(chain, std::ceil(tau_hat));
   int N_thin = thinned.size();
   double thinned_quartic_sum = 0.;
   #pragma omp parallel for reduction(+:thinned_quartic_sum)
-  for (int n = 0; n < N_thin; n ++) thinned_quartic_sum += pow(thinned[n] - sample_mean, 4);
+  for (int n = 0; n < N_thin; n ++) thinned_quartic_sum += std::pow(thinned[n] - sample_mean, 4);
   double sample_var_var = (thinned_quartic_sum/N_thin - (N_thin-3.)/(N_thin-1.)*sample_var*sample_var) / N_thin;
 
   means.push_back(sample_mean);
-  mean_errs.push_back(sqrt(sample_mean_var));
+  mean_errs.push_back(std::sqrt(sample_mean_var));
   vars.push_back(sample_var);
-  var_errs.push_back(sqrt(sample_var_var));
+  var_errs.push_back(std::sqrt(sample_var_var));
   taus.push_back(tau_hat);
   tau_errs.push_back(tau_hat_err);
 }

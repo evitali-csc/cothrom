@@ -5,6 +5,7 @@
 #include <string>
 #include <valarray>
 using std::valarray;
+#include <cmath>
 #include <chrono>
 #include <set>
 #include <filesystem>
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
     std::min(map.counties() - 1., 1.)
   };
   double alpha = .99;
-  double T = -(J_Z * max_deltaH).sum() / log(alpha);
+  double T = -(J_Z * max_deltaH).sum() / std::log(alpha);
   vector<double> Ts(0);
   // temperature cooling factor
   double cool = .9;
