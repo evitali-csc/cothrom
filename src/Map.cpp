@@ -16,40 +16,50 @@ vector<vector<int>> Map::connect_(vector<int>& disconnected) const
 {
   // disconnected: a list of EDs that we want to split into connected subsets, i.e. the contiguous parts
 
+  // Membership bitmap over ED indices (dense in [0, EDs_)): present[x] == 1 iff x
+  // is still an unassigned member of the input set. This replaces the old linear
+  // std::find / erase over `disconnected` (which made the whole routine O(k^2))
+  // with O(1) membership tests, giving overall O(k + edges).
+  //
+  // It is thread_local because connect_() is called concurrently from the
+  // parallel loop in config_update_(). The bitmap is kept all-zero between calls
+  // (every ED we mark below is unmarked again as it is absorbed into a subset),
+  // so it can be reused across calls without re-allocating or re-clearing.
+  static thread_local vector<char> present;
+  if (int(present.size()) < EDs_) present.assign(EDs_, 0);
+
+  // mark every ED currently in the set as present
+  for (int x : disconnected) present[x] = 1;
+
   // create an empty list of lists, where connected[i] will give the i-th connected subset of the input ED list
   vector<vector<int>> connected(0);
-  // iterate until our list of EDs is empty, i.e. until we have assigned each ED to a connected subset
-  while (not disconnected.empty())
+  // use the original list as the source of (arbitrary) seeds; any ED not yet
+  // absorbed into an earlier subset starts a new one
+  for (int seed : disconnected)
   {
-    // pick an arbitrary element of the remaining list of EDs - here we choose the last element of the list
-    // we will then create the connected subset to which this ED belongs
-    vector<int> group = { disconnected.back() };
-    disconnected.pop_back();
+    if (not present[seed]) continue;
+    // create the connected subset to which this seed belongs
+    vector<int> group = { seed };
+    present[seed] = 0;
     // iterate over EDs in connected subset (breadth-first) until no more neighbours can be added
-    int i = 0;
-    while (i < group.size())
+    for (size_t i = 0; i < group.size(); i ++)
     {
       int x = group[i];
-      // iterate over ED's neighbours
-      for (int j = 0; j < ED_nei_[x].size(); j ++)
+      // iterate over ED's neighbours; move any still-present neighbour into this subset
+      for (int y : ED_nei_[x])
       {
-        int y = ED_nei_[x][j];
-        // find location of neighbour in list of remaining EDs
-        // if it == disconnected.end() then the neighbour is not in list (and thus is already in our connected subset list or was never in the original list of EDs)
-        // otherwise we move it into our connected subset of EDs
-        vector<int>::iterator it = std::find(disconnected.begin(), disconnected.end(), y);
-        if (it != disconnected.end())
+        if (present[y])
         {
+          present[y] = 0;
           group.push_back(y);
-          disconnected.erase(it);
         }
       }
-      // move onto next ED in connected subset
-      i ++;
     }
     // append this connected subset into our list of connected subsets
-    connected.push_back(group);
+    connected.push_back(std::move(group));
   }
+  // honour the contract that the input vector is empty at return
+  disconnected.clear();
   return connected;
 }
 
