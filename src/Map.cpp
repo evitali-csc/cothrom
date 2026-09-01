@@ -289,7 +289,7 @@ int Map::GS_Sweep(valarray<double>& H, const valarray<double>& J_ZT)
       // no need to calculate "change" to current constituency
       else
       {
-        deltaH[q] = valarray<double>{ 0., 0., 0. };
+        deltaH[q] = valarray<double>{ 0., 0., 0., 0. };
         prop_dist[q] = 1.;
       }
     }
