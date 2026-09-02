@@ -12,6 +12,13 @@ using std::valarray;
 std::mt19937 r(1234);
 std::uniform_real_distribution<double> standard_uniform(0., 1.);
 
+// Minimum number of constituencies (Q_) at which parallelising the per-site
+// Gibbs loop over constituencies is worth its OpenMP fork/join cost. Below this
+// the loop runs serially: Q_ is small for area-scale runs and the loop executes
+// once per ED per sweep, so at small Q_ the fork/join overhead dominates the
+// tiny per-constituency work. Conservative default - tune per target/benchmark.
+static constexpr int GS_PARALLEL_MIN_Q = 32;
+
 vector<vector<int>> Map::connect_(vector<int>& disconnected) const
 {
   // disconnected: a list of EDs that we want to split into connected subsets, i.e. the contiguous parts
@@ -287,7 +294,10 @@ int Map::GS_Sweep(valarray<double>& H, const valarray<double>& J_ZT)
     vector<valarray<double>> deltaH(Q_, deltaH_curr_(x, cqg_idx, cngs));
     vector<double> prop_dist(Q_);
     // iterating over all constituencies
-    #pragma omp parallel for
+    // Parallelise only when Q_ is large enough to amortise fork/join (see
+    // GS_PARALLEL_MIN_Q); serial otherwise. Each iteration writes only its own
+    // q-indexed slots and deltaH_prop_ is const, so the loop is data-race free.
+    #pragma omp parallel for if(Q_ >= GS_PARALLEL_MIN_Q)
     for (int q = 0; q < Q_; q ++)
     {
       // calculate change in Hamiltonians & corresponding distribution weight for each possible change
