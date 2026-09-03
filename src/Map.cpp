@@ -99,11 +99,16 @@ Ham Map::deltaH_curr_(const int& x, int& cqg_idx, vector<vector<int>>& cngs) con
   int deltaHD_curr = 0;
   for (int i = 0; i < ED_nei_[x].size(); i ++) if (ED_q_[ED_nei_[x][i]] == curr) deltaHD_curr ++;
 
-  // calculate the decrease in the county boundary Hamiltonian, i.e. only if removing x from its constituency lessens a breach
+  // calculate the decrease in the county boundary Hamiltonian, i.e. only if removing x from its constituency lessens a breach.
+  // Removing x lowers county cx's tally by one; the breach count is (EDs in constituency) - (largest county group),
+  // so removing x lessens a breach iff cx is not the sole-largest group, i.e. iff some OTHER county holds at least
+  // as many EDs: max_{c != cx} q_cou_[curr][c] >= q_cou_[curr][cx]. Computed in one pass, avoiding the old per-site
+  // heap copy of the whole tally vector.
   int deltaHB_curr = 0;
-  vector<int> tmp_county_tally = q_cou_[curr];
-  tmp_county_tally[ED_cou_[x]] --;
-  if (tmp_county_tally[ED_cou_[x]] < *std::max_element(tmp_county_tally.begin(), tmp_county_tally.end())) deltaHB_curr --;
+  int cx = ED_cou_[x];
+  int max_other = 0;
+  for (int c = 0; c < counties_; c ++) if (c != cx && q_cou_[curr][c] > max_other) max_other = q_cou_[curr][c];
+  if (max_other >= q_cou_[curr][cx]) deltaHB_curr --;
 
   // return the changes to the population, contiguity, and compactness Hamiltonians
   return Ham{ (std::fabs(q_pop_[curr] - ED_pop_[x]) - std::fabs(q_pop_[curr]))/(seats_[curr] * av_pop_), std::fabs(q_group_[curr].size() + cngs.size() - 2.) - q_group_[curr].size() + 1, double(deltaHD_curr), double(deltaHB_curr) };
