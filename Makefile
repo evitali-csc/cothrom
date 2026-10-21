@@ -18,7 +18,7 @@ SIF        = cothrom.sif
 DEF        = cothrom.def
 SINGULARITY = singularity
 # bind the repo so scripts in the container can read/write ./data
-RUN         = $(SINGULARITY) exec --bind $(CURDIR) $(SIF)
+RUN         = $(SINGULARITY) exec --bind $(CURDIR) --pwd $(CURDIR) $(SIF)
 
 # --- C++ / CMake -----------------------------------------------------------
 BUILD_DIR  = build
@@ -52,7 +52,7 @@ data/ED_data.csv: $(SIF) code/combine_data.py
 # Pass the area on the command line, e.g.
 #   make prepare AREA_TYPE=County AREA_LIST=LONGFORD,WESTMEATH,OFFALY,LAOIS \
 #                AREA_NAME="Midland counties"
-# Quote values containing spaces. 
+# Quote values containing spaces.
 USAGE_PREPARE = Usage: make prepare AREA_TYPE=<type> AREA_LIST=<csv> AREA_NAME="<name>"
 prepare: data/ED_data.csv
 	@test -n '$(AREA_TYPE)' || { echo 'AREA_TYPE not set. $(USAGE_PREPARE)'; exit 1; }
