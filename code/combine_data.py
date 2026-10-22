@@ -34,7 +34,7 @@ else:
 # Downloading Tailte Éireann geographical data if not in data directory
 available_resolutions = ["100m", "50m", "20m", "Ungeneralised"]
 map_dict = {available_resolution: {
-    "webpage": f"https://data.gov.ie/dataset/cso-electoral-divisions-national-statistical-boundaries-2022-{webpage_suffix}1",
+    "webpage": f"https://data.gov.ie/dataset/cso-electoral-divisions-national-statistical-boundaries-2022-{webpage_suffix}",
     "download": f"https://data-osi.opendata.arcgis.com/api/download/v1/items/{download_suffix}"
     } for available_resolution, webpage_suffix, download_suffix in zip(
         available_resolutions, ["generalised-100m", "generalised-50m", "generalised-20m", "ungeneralised"],
@@ -63,7 +63,7 @@ counties_file = glob(os.path.join(data_dir, "Counties*.geojson"))
 if not counties_file:
     print(
         "Tailte Éireann county geography not in data directory. Downloading from "
-        "https://data.gov.ie/dataset/counties-national-statutory-boundaries-2019-generalised-20m1..."
+        "https://data.gov.ie/dataset/counties-national-statutory-boundaries-2019-generalised-20m..."
         )
     try:
         r = requests.get(
