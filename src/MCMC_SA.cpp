@@ -14,6 +14,12 @@ using std::valarray;
 
 int main(int argc, char *argv[])
 {
+  if (argc != 5)
+  {
+    std::cerr << "Error: " << (argc-1) << " arguments provided, 4 arguments required.\n";
+    return 1;
+  }
+
   // custom name for area of consideration - first command line argument
   std::string map_name = argv[1];
   // directory for reading population & neighbour data and saving configs
@@ -25,6 +31,11 @@ int main(int argc, char *argv[])
   std::ifstream pop_file(data_dir + "Population.txt");
   while (getline(pop_file, line)) populations.push_back(stoi(line));
   pop_file.close();
+  if (populations.empty())
+  {
+    std::cerr << "Error: Population file is empty or missing.\n";
+    return 1;
+  }
   // read neighbours - multiple integers (neighbours) separated by spaces per line (ED)
   vector<vector<int>> neighbours(0);
   std::ifstream nei_file(data_dir + "Neighbours.txt");
@@ -37,16 +48,30 @@ int main(int argc, char *argv[])
     neighbours.push_back(nei);
   }
   nei_file.close();
+  if (neighbours.empty())
+  {
+    std::cerr << "Error: Neighbours file is empty or missing.\n";
+    return 1;
+  }
   // read counties - one integer (county) per line (ED)
   vector<int> counties(0);
   std::ifstream cou_file(data_dir + "County.txt");
   while (getline(cou_file, line)) counties.push_back(stoi(line));
   cou_file.close();
+  if (counties.empty())
+  {
+    std::cerr << "Error: Counties file is empty or missing.\n";
+    return 1;
+  }
 
   // seats per constituency - second command line argument
   std::stringstream ss(argv[2]);
   vector<int> seats(0);
   while (getline(ss, line, ',')) seats.push_back(stoi(line));
+  if (seats.empty()) {
+    std::cerr << "Error: No seats provided via command line.\n";
+    return 1;
+  }
   std::sort(seats.begin(), seats.end());
   // initialising map
   Map map(seats, populations, neighbours, counties);
