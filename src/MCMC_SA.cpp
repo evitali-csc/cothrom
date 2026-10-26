@@ -14,6 +14,12 @@ using std::valarray;
 
 int main(int argc, char *argv[])
 {
+  if (argc != 5)
+  {
+    std::cerr << "Error: " << (argc-1) << " arguments provided, 4 arguments required.\n";
+    return 1;
+  }
+
   // custom name for area of consideration - first command line argument
   std::string map_name = argv[1];
   // directory for reading population & neighbour data and saving configs
@@ -25,6 +31,11 @@ int main(int argc, char *argv[])
   std::ifstream pop_file(data_dir + "Population.txt");
   while (getline(pop_file, line)) populations.push_back(stoi(line));
   pop_file.close();
+  if (populations.empty())
+  {
+    std::cerr << "Error: Population file is empty or missing.\n";
+    return 1;
+  }
   // read neighbours - multiple integers (neighbours) separated by spaces per line (ED)
   vector<vector<int>> neighbours(0);
   std::ifstream nei_file(data_dir + "Neighbours.txt");
@@ -37,17 +48,32 @@ int main(int argc, char *argv[])
     neighbours.push_back(nei);
   }
   nei_file.close();
+  if (neighbours.empty())
+  {
+    std::cerr << "Error: Neighbours file is empty or missing.\n";
+    return 1;
+  }
   // read counties - one integer (county) per line (ED)
   vector<int> counties(0);
   std::ifstream cou_file(data_dir + "County.txt");
   while (getline(cou_file, line)) counties.push_back(stoi(line));
   cou_file.close();
+  if (counties.empty())
+  {
+    std::cerr << "Error: Counties file is empty or missing.\n";
+    return 1;
+  }
 
   // seats per constituency - second command line argument
   std::stringstream ss(argv[2]);
   vector<int> seats(0);
   while (getline(ss, line, ',')) seats.push_back(stoi(line));
-  std::sort(seats.begin(), seats.end());
+  if (seats.empty()) {
+    std::cerr << "Error: No seats provided via command line.\n";
+    return 1;
+  }
+  vector<int> sorted_seats(seats);
+  std::sort(sorted_seats.begin(), sorted_seats.end());
   // initialising map
   Map map(seats, populations, neighbours, counties);
   // storing the initial map configuration
@@ -70,7 +96,7 @@ int main(int argc, char *argv[])
     // i.e population variance of smallest constituency = abs(total seats - constituency seats) / (constituency seats) = (total seats) / (constituency seats) - 1
     // and population variance of each other constituency = abs(-constituency seats) / (constituency seats) = 1
     // so max(H_P) = total/smallest - 1 + (Q - 1) = total/smallest + Q - 2
-    double(map.total_seats()) / map.seat(0) + map.Q() - 2.,
+    double(map.total_seats()) / sorted_seats.front() + map.Q() - 2.,
     // max(H_C): no ED is connected to another ED in the same constituency, i.e. number of disconnected parts = number of EDs
     double(map.EDs()),
     // max(H_D): same case as max(H_C), i.e. all neighbours of each ED are in a different constituency
@@ -98,7 +124,7 @@ int main(int argc, char *argv[])
   valarray<double> max_deltaH = {
     // max(deltaH_P): smallest-seat constituency is already under-represented and loses the map's most populated ED to the next smallest constituency which was already over-represented
     // i.e. abs(-max_pop/(smallest desired seats)) + abs(max_pop/(next smallest desired seats)) = max_pop/(av_pop*seats[0]) + max_pop/(av_pop*seats[1])
-    (max_pop / map.av_pop()) * (1./map.seat(0) + 1./map.seat(1)),
+    (max_pop / map.av_pop()) * (1./sorted_seats[0] + 1./sorted_seats[1]),
     // max(deltaH_C): removing from current constituency splits all neighbours into disconnected regions, adding to new constituency creates a new disconnected region
     // note: in most cases only floor(neighbours/2) can be made disconnected but there are some edge cases with neighbours with only one neighbour (e.g. islands) so this is an upper bound
     max_nei + 1.,
