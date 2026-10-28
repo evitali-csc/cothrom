@@ -17,7 +17,7 @@ std::uniform_real_distribution<double> standard_uniform(0., 1.);
 // tiny per-constituency work. Conservative default - tune per target/benchmark.
 static constexpr int GS_PARALLEL_MIN_Q = 32;
 
-vector<vector<int>> Map::connect_(vector<int>& disconnected) const
+vector<vector<int>> Map::connect_(const vector<int>& disconnected) const
 {
   // disconnected: a list of EDs that we want to split into connected subsets, i.e. the contiguous parts
 
@@ -63,8 +63,6 @@ vector<vector<int>> Map::connect_(vector<int>& disconnected) const
     // append this connected subset into our list of connected subsets
     connected.push_back(std::move(group));
   }
-  // honour the contract that the input vector is empty at return
-  disconnected.clear();
   return connected;
 }
 
