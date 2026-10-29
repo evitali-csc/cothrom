@@ -4,4 +4,3 @@ pandas
 geopandas
 requests
 libpysal
-pytz
